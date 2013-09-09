@@ -5,6 +5,7 @@ class Book
     @title = title
     @author = author
     @description = description
+    @status = "available"
     puts "Init2 is running"
   end
 
@@ -20,6 +21,10 @@ class Book
     return @description
   end
 
+  def status()
+    @status
+  end
+
 end
 
 class Library 
@@ -33,7 +38,11 @@ class Library
 
   # add book to library in books array
   def add_book(book)
-    @books << book
+    if book.is_a?(Book)
+      @books << book 
+    else
+    "not a book"
+    end
   end 
 
   # adds user to users hash 
@@ -59,32 +68,64 @@ class User
 
   def initialize(name, options=nil)
     # @users = []
-    @name = name
+    @username = name
     @books_out = []
     puts "Init3 is running"
+    @overdue = []
   end
   
   def name()
-    @name
+    @username
   end
+
+  def books_out()
+    @books_out
+  end
+
+  def overdue()
+    @overdue
+  end
+  
+  # checks to see if user has books overdue # not working, code commented to force it to clear
+  #def overdue(book)
+  #  puts "Running tests now!"
+  #  if @username.checkout(book) > (Time.now - 604800)
+  #    puts "You have at least one overdue book. You dick."
+  #  else
+  #    puts "Good to go, #{@username}!"
+  #    return "bitch"
+  #  end
+
+  #end
 
   # checks how many books a user has out
   # checks if user has books overdue
-  def checkout_log(username)
-    if (@username[books_out] > 2) && (@username[overdue] == nil)
-      Puts "All good, #{username}!"
-      return true
+  def checkout_log(username=nil)
+    if books_out.length < 2  
+      if username.overdue >= 1 
+        puts "Good to go, #{@username}!"
+        return true
+      else
+        puts "You have at least one overdue book. fix that and come back."
+      end
     else
       puts "Please return a book before trying to get a new one."
     end
-  end  
+  end
 
   # checks checkout_log and 
   # if checkout_log clears, allows user to check out book for a week
   def checkout(book)
-    if @username.checkout_log?(true)
-      @books_out << book 
+    if @username.checkout_log == true
+      if book.status == "available"
+        @books_out << book 
+        @status = "Checked out by #{@username}"
+        puts "#{book} #{@status}"
+      else
+        puts "Sorry, that book is already out."
+      end
     else
+      puts "Sorry, you can't have any books right now. \n Check checkout_log for more details, if I ever get that shit working."
     end
   end
   
@@ -94,6 +135,8 @@ class User
     @books_out >> book
   end
 end
+
+
 
 lib = Library.new
 book1 = Book.new("Jurassic Park", "Michael Crichton")
@@ -119,3 +162,6 @@ lib.add_user(username3)
 puts "Here's who your borrowers are:" 
 puts lib.userlist()
 
+username1.checkout(book1)
+puts username1.books_out "<-- that's your book"
+username1.checkout_log()
