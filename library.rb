@@ -1,167 +1,139 @@
-class Book
+# Library
+#   Collection of books
+#   Collection of users
 
-  def initialize(title, author, description=nil)
-    #@book = {title: @title, author: @author, description: @description}
+# Book
+#   Author
+#   Title  
+#   Description
+#   Status
+#   Due Date 
+#   who has it checked out
+
+# User
+#   Name 
+#   Collection of Books 
+
+class Book
+  attr_accessor :title, :author, :description, :status, :due_date, :renter
+  def initialize(title) # add in args from attr_reader?
     @title = title
     @author = author
     @description = description
-    @status = "available"
-    puts "Init2 is running"
-  end
+    @status = "Checked In"
+    @due_date = nil  
+    @renter = nil
+  end  
 
-  def title()
-    return @title
-  end
-
-  def author()
-    return @author
-  end
-
-  def description()
-    return @description
-  end
 
   def status()
+    if !@due_date.nil? and Time.now > @due_date
+      @status = "Overdue"
+    end
+
+    case @status
+     when "Checked Out"
+       puts "#{@title} is currently checked out!"
+     when "Overdue"
+       puts "#{title} is overdue!"
+     else
+       puts "#{title} is checked in." 
+    end
+
     @status
   end
 
 end
 
-class Library 
+# u = User.new("Nicole")
+# u.name => Nicole
+# u.books_rented => []
 
-  def initialize(options=nil)
-    @books = []
-    @users = []
-    #@book = {} #or just 'book'?
-    puts "Init1 is running"
+class User
+  attr_accessor :books_rented 
+  attr_reader :name
+  def initialize(name)
+    @name = name
+    @books_rented = []
   end
 
-  # add book to library in books array
+  def add_book(book)
+    @books_rented << book
+  end
+
+  # returns true if user has rented less than 2 books and
+  # has no overdue books
+  def can_rent_books? # if a method will return true or false, put a ? instead of ()
+    @books_rented.each do |b|
+      if b.status == "Overdue"
+        return false
+      end
+    end
+
+    @books_rented.count < 2  
+  end
+
+  def check_overdue
+    @books_rented.each do |b| 
+      return "#{b.to_s} is overdue" if b.status == "Overdue" 
+    end
+  end
+end
+# Library.new -- note no arguments in initialize,
+# which is why the @ can be an empty array
+
+class Library
+  def initialize
+    @books = []
+    @users = []
+  end
+
   def add_book(book)
     if book.is_a?(Book)
       @books << book 
     else
-    "not a book"
+      "not a book"
     end
   end 
+  
+  def add_user(user)
+    @users << user
+  end
 
-  # adds user to users hash 
-  def add_user(username)
-    @users << username
+  def checkout_book(user, book)
+    if user.can_rent_books? && book.status == "Checked In" # make new method instead of complicated && stuff - also let it be in User class 
+      book.status = "Checked Out"
+      book.due_date = Time.now + 604800 
+      book.renter = user.name #user from method arg, .name = instance of User class
+      user.add_book(book) # .book comes from attr_accessor in User class
+    else
+      puts "cannot check out #{book.title}" # retrieves name of book
+    end
+  end
+
+  def checkin_book(user, book)
+    book.status = "Checked In"
+    book.due_date = nil
+    book.renter = nil
+    user.books_rented.delete(book) #no need to put it back in library, it only had its status changed within the library
   end
   
-  # prints current contents of library
-  def booklist()
-    @books.map do |book|
-      puts "#{book.title}, #{book.author}"
+  def has_what(user)
+    user.books_rented.collect do |book|
+      "#{book.title} is due back at #{book.due_date}"
     end
   end
 
-  def userlist()
-    @users.map do |username|
-      puts "#{username.name}"
-    end
-  end
 end
 
-class User
-
-  def initialize(name, options=nil)
-    # @users = []
-    @username = name
-    @books_out = []
-    puts "Init3 is running"
-    @overdue = []
-  end
-  
-  def name()
-    @username
-  end
-
-  def books_out()
-    @books_out
-  end
-
-  def overdue()
-    @overdue
-  end
-  
-  # checks to see if user has books overdue # not working, code commented to force it to clear
-  #def overdue(book)
-  #  puts "Running tests now!"
-  #  if @username.checkout(book) > (Time.now - 604800)
-  #    puts "You have at least one overdue book. You dick."
-  #  else
-  #    puts "Good to go, #{@username}!"
-  #    return "bitch"
-  #  end
-
-  #end
-
-  # checks how many books a user has out
-  # checks if user has books overdue
-  def checkout_log(username=nil)
-    if books_out.length < 2  
-      if username.overdue >= 1 
-        puts "Good to go, #{@username}!"
-        return true
-      else
-        puts "You have at least one overdue book. fix that and come back."
-      end
-    else
-      puts "Please return a book before trying to get a new one."
-    end
-  end
-
-  # checks checkout_log and 
-  # if checkout_log clears, allows user to check out book for a week
-  def checkout(book)
-    if @username.checkout_log == true
-      if book.status == "available"
-        @books_out << book 
-        @status = "Checked out by #{@username}"
-        puts "#{book} #{@status}"
-      else
-        puts "Sorry, that book is already out."
-      end
-    else
-      puts "Sorry, you can't have any books right now. \n Check checkout_log for more details, if I ever get that shit working."
-    end
-  end
-  
-  # takes a book out of the user's books_out list 
-  # and puts it back in Library --- HOW? 
-  def return_book(book)
-    @books_out >> book
-  end
-end
-
-
-
-lib = Library.new
-book1 = Book.new("Jurassic Park", "Michael Crichton")
-book2 = Book.new("Snow Crash", "Neal Stephenson")
-book3 = Book.new("Hocus Pocus", "Kurt Vonnegut")
-book4 = Book.new("The Menace From Earth", "Robert Heinlein")
-lib.add_book(book1)
-lib.add_book(book2)
-lib.add_book(book3)
-lib.add_book(book4)
-
-puts "Book 1 title: #{book1.title}"
-puts "Book 2 title: #{book2.title}"
-puts "Here's what your library looks like right now:" 
-puts lib.booklist()
-
-username1 = User.new("Nicole")
-username2 = User.new("Greg")
-username3 = User.new("Amy")
-lib.add_user(username1)
-lib.add_user(username2)
-lib.add_user(username3)
-puts "Here's who your borrowers are:" 
-puts lib.userlist()
-
-username1.checkout(book1)
-puts username1.books_out "<-- that's your book"
-username1.checkout_log()
+b = Book.new("Snow Crash")
+puts b.title
+u1 = User.new("Nicole")
+library = Library.new
+library.add_book(b)
+library.add_user(u1)
+puts u1.can_rent_books?
+library.checkout_book(u1, b)
+puts b.status 
+puts library.has_what(u1)
+puts u1.check_overdue
